@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 from openai import OpenAI
 from dotenv import load_dotenv
 from pathlib import Path
+from PyPDF2 import PdfReader
+import io
 
 # Load .env from the same directory as this script
 env_path = Path(__file__).parent / '.env'
@@ -52,6 +54,22 @@ def fetch_text(url: str) -> str:
 
     text = soup.get_text(separator=" ", strip=True)
     return text[:3000]
+
+
+def extract_pdf_text(file_content: bytes) -> str:
+    """Extract text from PDF file"""
+    try:
+        pdf_file = io.BytesIO(file_content)
+        pdf_reader = PdfReader(pdf_file)
+        
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text() + " "
+        
+        # Limit to first 3000 characters for API efficiency
+        return text.strip()[:3000]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to extract PDF text: {str(e)}")
 
 
 QUICK_PROMPT = """Analyze this content and return a response in exactly this format, with no extra commentary:
@@ -120,10 +138,50 @@ def summarize(body: SummarizeRequest):
             max_tokens=400 if body.quick else 900,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"OpenAI error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"API error: {str(e)}")
 
     result = response.choices[0].message.content
     return {"result": result, "quick": body.quick}
+
+
+@app.post("/summarize-pdf")
+async def summarize_pdf(
+    file: UploadFile = File(...),
+    quick: bool = Form(False)
+):
+    """Summarize uploaded PDF file"""
+    
+    # Validate file type
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=422, detail="Only PDF files are supported.")
+    
+    # Read file content
+    try:
+        content = await file.read()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
+    
+    # Extract text from PDF
+    text = extract_pdf_text(content)
+    
+    if not text.strip():
+        raise HTTPException(status_code=422, detail="Could not extract any text from PDF.")
+    
+    # Generate summary
+    prompt = (QUICK_PROMPT if quick else FULL_PROMPT).format(text=text)
+    
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5,
+            max_tokens=400 if quick else 900,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"API error: {str(e)}")
+    
+    result = response.choices[0].message.content
+    return {"result": result, "quick": quick, "filename": file.filename}
 
 
 if __name__ == "__main__":

@@ -58,6 +58,166 @@
       line-height: 1.5;
     }
 
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      background: var(--card);
+      padding: 0.375rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.625rem 1rem;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .pdf-upload-area {
+      background: var(--card);
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .pdf-upload-area:hover {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.02);
+    }
+
+    .pdf-upload-area.dragover {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .pdf-upload-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1rem;
+      color: var(--accent);
+    }
+
+    .pdf-upload-text {
+      color: var(--text);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .pdf-upload-hint {
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+    }
+
+    .pdf-file-info {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1rem;
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 10px;
+      margin-top: 1rem;
+    }
+
+    .pdf-file-info svg {
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .pdf-file-name {
+      flex: 1;
+      color: var(--text);
+      font-size: 0.875rem;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pdf-remove-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .pdf-remove-btn:hover {
+      color: var(--danger);
+    }
+
+    #pdf-simplify-btn {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.875rem 1.5rem;
+      border-radius: 10px;
+      border: none;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: inherit;
+    }
+
+    #pdf-simplify-btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    #pdf-simplify-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    #pdf-simplify-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .input-wrap {
       width: 100%;
       max-width: 720px;
@@ -484,15 +644,55 @@
 
   <div class="header">
     <h1>Link Simplifier</h1>
-    <p>Summarize any article in seconds</p>
+    <p>Summarize articles and PDFs in seconds</p>
   </div>
 
   <div class="input-wrap">
-    <div class="input-row">
-      <input type="text" id="url-input" placeholder="https://example.com/article..." autocomplete="off" spellcheck="false" />
-      <button id="simplify-btn" onclick="simplify()">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('url')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        URL
+      </button>
+      <button class="tab-btn" onclick="switchTab('pdf')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        PDF
+      </button>
+    </div>
+
+    <div id="url-tab" class="tab-content active">
+      <div class="input-row">
+        <input type="text" id="url-input" placeholder="https://example.com/article..." autocomplete="off" spellcheck="false" />
+        <button id="simplify-btn" onclick="simplify()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Simplify
+        </button>
+      </div>
+    </div>
+
+    <div id="pdf-tab" class="tab-content">
+      <div class="pdf-upload-area" id="pdf-upload-area" onclick="document.getElementById('pdf-file-input').click()">
+        <svg class="pdf-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <line x1="9" y1="15" x2="15" y2="15"/>
+        </svg>
+        <div class="pdf-upload-text">Click to upload or drag and drop</div>
+        <div class="pdf-upload-hint">PDF files only (Max 10MB)</div>
+      </div>
+      <input type="file" id="pdf-file-input" accept=".pdf" style="display: none;" onchange="handlePdfSelect(event)">
+      
+      <div class="pdf-file-info" id="pdf-file-info">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="pdf-file-name" id="pdf-file-name"></span>
+        <button class="pdf-remove-btn" onclick="removePdf()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <button id="pdf-simplify-btn" onclick="simplifyPdf()" disabled>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Simplify
+        Simplify PDF
       </button>
     </div>
 
@@ -582,7 +782,142 @@
 
   <script>
     const API = "http://127.0.0.1:8000/summarize";
+    const PDF_API = "http://127.0.0.1:8000/summarize-pdf";
     let lastRawResult = "";
+    let selectedPdfFile = null;
+
+    function switchTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.closest('.tab-btn').classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tab + '-tab').classList.add('active');
+      
+      // Hide output and errors when switching tabs
+      document.getElementById('output').style.display = 'none';
+      hideError();
+    }
+
+    function handlePdfSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        showError('Please select a PDF file.');
+        return;
+      }
+      
+      if (file.size > 10 * 1024 * 1024) {
+        showError('File size must be less than 10MB.');
+        return;
+      }
+      
+      selectedPdfFile = file;
+      document.getElementById('pdf-file-name').textContent = file.name;
+      document.getElementById('pdf-file-info').style.display = 'flex';
+      document.getElementById('pdf-simplify-btn').disabled = false;
+      document.getElementById('pdf-upload-area').style.display = 'none';
+    }
+
+    function removePdf() {
+      selectedPdfFile = null;
+      document.getElementById('pdf-file-input').value = '';
+      document.getElementById('pdf-file-info').style.display = 'none';
+      document.getElementById('pdf-simplify-btn').disabled = true;
+      document.getElementById('pdf-upload-area').style.display = 'block';
+    }
+
+    async function simplifyPdf() {
+      if (!selectedPdfFile) {
+        showError('Please select a PDF file first.');
+        return;
+      }
+      
+      const btn = document.getElementById('pdf-simplify-btn');
+      const output = document.getElementById('output');
+      const loading = document.getElementById('loading');
+      const quick = document.getElementById('quick-toggle').checked;
+      
+      hideError();
+      output.style.display = 'none';
+      
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Analyzing PDF...';
+      loading.style.display = 'flex';
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedPdfFile);
+        formData.append('quick', quick);
+        
+        const res = await fetch(PDF_API, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          showError(data.detail || 'Could not process PDF. Please try another file.');
+          return;
+        }
+        
+        lastRawResult = data.result;
+        renderResult(data.result);
+        output.classList.toggle('quick-mode', quick);
+        output.style.display = 'flex';
+      } catch (error) {
+        showError('Could not reach the backend — make sure it\'s running on port 8000.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Simplify PDF';
+        loading.style.display = 'none';
+      }
+    }
+
+    // Drag and drop support
+    const uploadArea = document.getElementById('pdf-upload-area');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, () => {
+        uploadArea.classList.add('dragover');
+      }, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, () => {
+        uploadArea.classList.remove('dragover');
+      }, false);
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      
+      if (files.length > 0) {
+        const file = files[0];
+        if (file.name.toLowerCase().endsWith('.pdf')) {
+          selectedPdfFile = file;
+          document.getElementById('pdf-file-name').textContent = file.name;
+          document.getElementById('pdf-file-info').style.display = 'flex';
+          document.getElementById('pdf-simplify-btn').disabled = false;
+          document.getElementById('pdf-upload-area').style.display = 'none';
+        } else {
+          showError('Please drop a PDF file.');
+        }
+      }
+    }, false);
 
     async function simplify() {
       const url = document.getElementById("url-input").value.trim();
