@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Link Simplifier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-subtle: #94a3b8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4rem 1.5rem 5rem;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+
+    .input-wrap {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.75rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.5rem;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .input-row:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), var(--shadow-md);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 0.9375rem;
+      outline: none;
+      font-family: inherit;
+    }
+
+    input[type="text"]::placeholder { 
+      color: var(--text-subtle);
+    }
+
+    #simplify-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      border: none;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: inherit;
+    }
+
+    #simplify-btn:hover:not(:disabled) { 
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    #simplify-btn:active:not(:disabled) { 
+      transform: translateY(0);
+    }
+    
+    #simplify-btn:disabled { 
+      opacity: 0.5; 
+      cursor: not-allowed;
+    }
+
+    .error-banner {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding: 0.875rem 1.125rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      color: var(--danger);
+      font-size: 0.875rem;
+    }
+
+    .error-banner svg { flex-shrink: 0; }
+
+    .loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading p {
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+    }
+
+    #output {
+      width: 100%;
+      max-width: 720px;
+      margin-top: 2rem;
+      display: none;
+      flex-direction: column;
+      gap: 2rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s ease;
+    }
+
+    .result-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .card-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .card-label svg { 
+      width: 14px;
+      height: 14px;
+      opacity: 0.7;
+    }
+
+    #summary-card {
+      border-left: 3px solid var(--accent);
+    }
+
+    #summary-text {
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    .key-points {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+
+    .key-points li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      color: var(--text);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    .bullet-dot {
+      flex-shrink: 0;
+      margin-top: 0.5rem;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .verdict-inner {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .verdict-badge {
+      flex-shrink: 0;
+      padding: 0.375rem 1rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      letter-spacing: 0.01em;
+    }
+
+    .badge-read { 
+      background: #d1fae5; 
+      color: #065f46;
+    }
+    
+    .badge-skip { 
+      background: #fee2e2; 
+      color: #991b1b;
+    }
+    
+    .badge-optional { 
+      background: #fef3c7; 
+      color: #92400e;
+    }
+
+    .verdict-reason {
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      padding-top: 0.25rem;
+    }
+
+    .output-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -0.5rem;
+    }
+
+    #copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    #copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .toggle-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      transition: color 0.2s;
+      font-weight: 500;
+    }
+
+    .toggle-label.active { 
+      color: var(--accent); 
+    }
+
+    .switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      cursor: pointer;
+    }
+
+    .switch input { 
+      opacity: 0; 
+      width: 0; 
+      height: 0; 
+    }
+
+    .switch-track {
+      position: absolute;
+      inset: 0;
+      background: #d1d5db;
+      border-radius: 999px;
+      transition: background 0.2s;
+    }
+
+    .switch input:checked ~ .switch-track {
+      background: var(--accent);
+    }
+
+    .switch-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .switch input:checked ~ .switch-thumb { 
+      transform: translateX(18px); 
+    }
+
+    #output.quick-mode #summary-card,
+    #output.quick-mode .takeaway-card,
+    #output.quick-mode .meta-row { 
+      display: none; 
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .meta-chip svg { 
+      color: var(--accent);
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+    }
+
+    #audience-chip.level-beginner { 
+      border-color: var(--success);
+      color: var(--success);
+      background: #d1fae5;
+    }
+    
+    #audience-chip.level-intermediate { 
+      border-color: var(--warning);
+      color: var(--warning);
+      background: #fef3c7;
+    }
+    
+    #audience-chip.level-advanced { 
+      border-color: var(--danger);
+      color: var(--danger);
+      background: #fee2e2;
+    }
+
+    .takeaway-card {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, var(--card) 100%);
+      border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    #takeaway-text {
+      color: var(--text);
+      font-size: 1rem;
+      line-height: 1.7;
+      font-style: italic;
+    }
+
+    @media (max-width: 640px) {
+      body { 
+        padding: 2.5rem 1rem 3rem; 
+      }
+      
+      .header h1 { 
+        font-size: 1.5rem; 
+      }
+      
+      .header p {
+        font-size: 0.875rem;
+      }
+      
+      .input-row { 
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      #simplify-btn { 
+        justify-content: center; 
+        padding: 0.875rem;
+      }
+      
+      .result-card { 
+        padding: 1.25rem; 
+      }
+      
+      #output {
+        gap: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Link Simplifier</h1>
+    <p>Summarize any article in seconds</p>
+  </div>
+
+  <div class="input-wrap">
+    <div class="input-row">
+      <input type="text" id="url-input" placeholder="https://example.com/article..." autocomplete="off" spellcheck="false" />
+      <button id="simplify-btn" onclick="simplify()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Simplify
+      </button>
+    </div>
+
+    <div class="error-banner" id="error-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="error-text"></span>
+    </div>
+
+    <div class="toggle-row">
+      <label class="toggle-label" id="quick-label" for="quick-toggle">
+        <span>⚡</span> Quick Mode
+      </label>
+      <label class="switch">
+        <input type="checkbox" id="quick-toggle" />
+        <span class="switch-track"></span>
+        <span class="switch-thumb"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Analyzing...</p>
+  </div>
+
+  <div id="output">
+
+    <div class="result-card" id="summary-card">
+      <div class="card-header">
+        <div class="card-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Summary
+        </div>
+      </div>
+      <p id="summary-text"></p>
+    </div>
+
+    <div class="result-card">
+      <div class="card-header">
+        <div class="card-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Key Points
+        </div>
+      </div>
+      <ul class="key-points" id="key-points"></ul>
+    </div>
+
+    <div class="meta-row">
+      <div class="meta-chip" id="reading-time-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="reading-time-text"></span>
+      </div>
+      <div class="meta-chip" id="audience-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span id="audience-text"></span>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="card-header">
+        <div class="card-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Verdict
+        </div>
+      </div>
+      <div class="verdict-inner" id="verdict-box"></div>
+    </div>
+
+    <div class="result-card takeaway-card">
+      <div class="card-header">
+        <div class="card-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Key Takeaway
+        </div>
+      </div>
+      <p id="takeaway-text"></p>
+    </div>
+
+    <div class="output-footer">
+      <button id="copy-btn" onclick="copyResult()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    const API = "http://127.0.0.1:8000/summarize";
+    let lastRawResult = "";
+
+    async function simplify() {
+      const url = document.getElementById("url-input").value.trim();
+      const btn = document.getElementById("simplify-btn");
+      const output = document.getElementById("output");
+      const loading = document.getElementById("loading");
+      const quick = document.getElementById("quick-toggle").checked;
+
+      hideError();
+      output.style.display = "none";
+
+      if (!url) { showError("Please enter a URL."); return; }
+      if (!/^https?:\/\/.+/.test(url)) { showError("URL must start with http:// or https://"); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Analyzing...';
+      loading.style.display = "flex";
+
+      try {
+        const res = await fetch(API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, quick }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.detail || "Could not fetch article. Try another link.");
+          return;
+        }
+
+        lastRawResult = data.result;
+        renderResult(data.result);
+        output.classList.toggle("quick-mode", quick);
+        output.style.display = "flex";
+      } catch {
+        showError("Could not reach the backend — make sure it's running on port 8000.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Simplify';
+        loading.style.display = "none";
+      }
+    }
+
+    function renderResult(text) {
+      const summaryMatch = text.match(/Summary:\s*([\s\S]*?)(?=Key Points:|$)/i);
+      document.getElementById("summary-text").textContent =
+        summaryMatch ? summaryMatch[1].trim() : text.trim();
+
+      const pointsMatch = text.match(/Key Points:\s*([\s\S]*?)(?=Reading Time:|Verdict:|$)/i);
+      const ul = document.getElementById("key-points");
+      ul.innerHTML = "";
+      if (pointsMatch) {
+        pointsMatch[1].trim().split("\n")
+          .map(l => l.replace(/^[-•*]\s*/, "").trim())
+          .filter(Boolean)
+          .forEach(point => {
+            const li = document.createElement("li");
+            const dot = document.createElement("span");
+            dot.className = "bullet-dot";
+            li.appendChild(dot);
+            li.appendChild(document.createTextNode(point));
+            ul.appendChild(li);
+          });
+      }
+
+      const rtMatch = text.match(/Reading Time:\s*(.+)/i);
+      const rtChip = document.getElementById("reading-time-chip");
+      if (rtMatch) {
+        document.getElementById("reading-time-text").textContent = rtMatch[1].trim();
+        rtChip.style.display = "flex";
+      } else {
+        rtChip.style.display = "none";
+      }
+
+      const audMatch = text.match(/Target Audience:\s*(.+)/i);
+      const audChip = document.getElementById("audience-chip");
+      audChip.classList.remove("level-beginner", "level-intermediate", "level-advanced");
+      if (audMatch) {
+        const raw = audMatch[1].trim();
+        document.getElementById("audience-text").textContent = raw;
+        if (/beginner/i.test(raw)) audChip.classList.add("level-beginner");
+        else if (/intermediate/i.test(raw)) audChip.classList.add("level-intermediate");
+        else if (/advanced/i.test(raw)) audChip.classList.add("level-advanced");
+        audChip.style.display = "flex";
+      } else {
+        audChip.style.display = "none";
+      }
+
+      const verdictMatch = text.match(/Verdict:\s*([\s\S]*?)(?=Key Takeaway:|$)/i);
+      const box = document.getElementById("verdict-box");
+      box.innerHTML = "";
+      if (verdictMatch) {
+        const raw = verdictMatch[1].trim();
+        const badge = document.createElement("span");
+        badge.className = "verdict-badge";
+
+        if (/\bread\b/i.test(raw)) {
+          badge.textContent = "✓ Read";
+          badge.classList.add("badge-read");
+        } else if (/\bskip\b/i.test(raw)) {
+          badge.textContent = "✕ Skip";
+          badge.classList.add("badge-skip");
+        } else {
+          badge.textContent = "◎ Optional";
+          badge.classList.add("badge-optional");
+        }
+
+        const reason = document.createElement("span");
+        reason.className = "verdict-reason";
+        reason.textContent = raw.replace(/^(Read|Skip|Optional)\s*[—–\-]?\s*/i, "").trim();
+
+        box.appendChild(badge);
+        box.appendChild(reason);
+      }
+
+      const takeawayMatch = text.match(/Key Takeaway:\s*([\s\S]*)/i);
+      const takeawayEl = document.getElementById("takeaway-text");
+      if (takeawayMatch) {
+        takeawayEl.textContent = takeawayMatch[1].trim();
+        takeawayEl.closest(".takeaway-card").style.display = "block";
+      } else {
+        takeawayEl.closest(".takeaway-card").style.display = "none";
+      }
+    }
+
+    function showError(msg) {
+      const banner = document.getElementById("error-banner");
+      document.getElementById("error-text").textContent = msg;
+      banner.style.display = "flex";
+    }
+
+    function hideError() {
+      document.getElementById("error-banner").style.display = "none";
+    }
+
+    async function copyResult() {
+      if (!lastRawResult) return;
+      try {
+        await navigator.clipboard.writeText(lastRawResult);
+        const btn = document.getElementById("copy-btn");
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+      } catch {
+        showError("Copy failed — select the text manually.");
+      }
+    }
+
+    document.getElementById("url-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") simplify();
+    });
+
+    document.getElementById("quick-toggle").addEventListener("change", e => {
+      document.getElementById("quick-label").classList.toggle("active", e.target.checked);
+    });
+  </script>
+</body>
+</html>
