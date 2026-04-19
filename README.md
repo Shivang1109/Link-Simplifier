@@ -4,12 +4,14 @@ A smart web application that uses AI to summarize articles and web content in se
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)
-![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-orange.svg)
+![Groq](https://img.shields.io/badge/Groq-Llama--3.3--70B-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ## ✨ Features
 
-- **AI-Powered Summaries**: Uses OpenAI's GPT-4o-mini to generate intelligent summaries
+- **AI-Powered Summaries**: Uses Groq's Llama 3.3 70B model for fast, intelligent summaries
+- **100% Free**: No API costs - Groq provides free API access with generous limits
+- **Lightning Fast**: Get summaries in seconds with Groq's optimized inference
 - **Quick Mode**: Get a rapid 3-point summary with a verdict in seconds
 - **Full Analysis Mode**: Comprehensive breakdown including:
   - 2-3 sentence summary
@@ -27,7 +29,7 @@ A smart web application that uses AI to summarize articles and web content in se
 ### Prerequisites
 
 - Python 3.8 or higher
-- OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
+- Groq API key ([Get one FREE here](https://console.groq.com))
 
 ### Installation
 
@@ -48,9 +50,15 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-4. Edit `.env` and add your OpenAI API key:
+4. Get your FREE Groq API key:
+   - Go to https://console.groq.com
+   - Sign up (no credit card required!)
+   - Navigate to API Keys section
+   - Create a new API key
+
+5. Edit `.env` and add your Groq API key:
 ```
-OPENAI_API_KEY=sk-your-api-key-here
+GROQ_API_KEY=gsk-your-api-key-here
 ```
 
 ### Running the Application
@@ -108,7 +116,7 @@ curl -X POST "http://127.0.0.1:8000/summarize" \
 ## 🛠️ Tech Stack
 
 - **Backend**: FastAPI (Python)
-- **AI**: OpenAI GPT-4o-mini
+- **AI**: Groq API with Llama 3.3 70B
 - **Web Scraping**: BeautifulSoup4, Requests
 - **Frontend**: Vanilla HTML/CSS/JavaScript
 - **Server**: Uvicorn
@@ -130,7 +138,8 @@ Link-Simplifier/
 
 ### Environment Variables
 
-- `OPENAI_API_KEY`: Your OpenAI API key (required)
+- `GROQ_API_KEY`: Your Groq API key (required, FREE from https://console.groq.com)
+- `OPENAI_API_KEY`: Optional - if you prefer to use OpenAI instead
 
 ### Customization
 
@@ -138,22 +147,46 @@ You can modify the prompts in `main.py`:
 - `QUICK_PROMPT`: Controls quick mode output format
 - `FULL_PROMPT`: Controls full analysis output format
 
-Adjust token limits and temperature in the OpenAI API call:
+Adjust token limits and temperature in the API call:
 ```python
 response = client.chat.completions.create(
-    model="gpt-4o-mini",
+    model="llama-3.3-70b-versatile",  # Groq's fast model
     messages=[{"role": "user", "content": prompt}],
     temperature=0.5,  # Adjust for creativity (0-1)
     max_tokens=900,   # Adjust for response length
 )
 ```
 
+### Switching to OpenAI (Optional)
+
+If you prefer to use OpenAI instead of Groq:
+
+1. Update `main.py`:
+```python
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+```
+
+2. Change the model:
+```python
+model="gpt-4o-mini"
+```
+
+3. Add your OpenAI API key to `.env`
+
 ## 🔒 Security Notes
 
 - Never commit your `.env` file with real API keys
 - The `.env` file is already in `.gitignore`
-- Keep your OpenAI API key secure
+- Keep your Groq API key secure
 - Consider adding rate limiting for production use
+
+## 💰 Cost
+
+**100% FREE!** This project uses Groq's free API which provides:
+- No credit card required
+- Generous rate limits
+- Fast inference speeds
+- No hidden costs
 
 ## 🐛 Troubleshooting
 
@@ -166,10 +199,11 @@ response = client.chat.completions.create(
 - Some websites block automated requests
 - Check your internet connection
 
-**"OpenAI error"**
-- Verify your API key is correct in `.env`
-- Check your OpenAI account has credits
-- Ensure you have access to GPT-4o-mini model
+**"API error" or "Insufficient quota"**
+- Verify your Groq API key is correct in `.env`
+- Check you've signed up at https://console.groq.com
+- Ensure your API key starts with `gsk-`
+- Groq is free, so no billing issues!
 
 ## 📝 License
 
@@ -189,7 +223,8 @@ Contributions are welcome! Feel free to:
 
 ## 🙏 Acknowledgments
 
-- OpenAI for the GPT-4o-mini API
+- Groq for providing free, lightning-fast AI inference
+- Meta for the Llama 3.3 70B model
 - FastAPI for the excellent web framework
 - BeautifulSoup for web scraping capabilities
 
