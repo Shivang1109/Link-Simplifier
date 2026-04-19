@@ -7,8 +7,11 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Load .env from the same directory as this script
+env_path = Path(__file__).parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 app = FastAPI()
 
@@ -19,7 +22,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Use Groq (free alternative to OpenAI)
+client = OpenAI(
+    api_key=os.getenv("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1"
+)
 
 
 class SummarizeRequest(BaseModel):
@@ -107,7 +114,7 @@ def summarize(body: SummarizeRequest):
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="llama-3.3-70b-versatile",  # Free Groq model
             messages=[{"role": "user", "content": prompt}],
             temperature=0.5,
             max_tokens=400 if body.quick else 900,
